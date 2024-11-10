@@ -1,0 +1,64 @@
+.game-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.game-grid {
+  display: grid;
+  gap: 1px;
+  border: 1px solid #ccc;
+  width: 1500px;
+  height: 1500px;
+  background-color: #ccc;
+}
+
+.cell {
+  width: 100%;
+  height: 100%;
+  background-color: white;
+}
+
+.cell.alive {
+  background-color: black;
+}
+
+/* Add this to your Proj001.css */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 20px;
+}
+
+.game-title {
+  font-size: clamp(1.5rem, 3vw, 3rem);
+  margin-bottom: 1rem;
+}
+
+.controls {
+  display: flex;
+  gap: 2%;
+  width: 100%;
+  max-width: var(--grid-width);  /* We'll set this in React */
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.control-button {
+  flex: 1;
+  padding: clamp(0.5rem, 1vw, 1rem);
+  font-size: clamp(0.8rem, 1.5vw, 1.2rem);
+  min-width: min-content;
+  border-radius: 8px;
+  border: 2px solid #333;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.control-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
