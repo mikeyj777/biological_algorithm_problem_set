@@ -22,19 +22,30 @@ class Agent {
     this.id = 0;
   }
 
-  countNeighborsAlive(agents) {
+  countNeighborsAlive(agents, gridSide) {
     this.neighborsAlive = 0;
     for (let i = -1; i <= 1; i++) {
       for (let j = -1; j <= 1; j++) {
+        if (i === 0 && j === 0) continue; // Skip self
+        
+        const neighborX = this.x + i;
+        const neighborY = this.y + j;
+        
+        // Check bounds
+        if (neighborX < 0 || neighborX >= gridSide || neighborY < 0 || neighborY >= gridSide) {
+          continue;
+        }
+
         const neighbor = agents.find(
-          (a) => a.x === this.x + i && a.y === this.y + j
+          (a) => a && a.x === neighborX && a.y === neighborY
         );
+        
         if (neighbor && neighbor.alive) {
           this.neighborsAlive++;
         }
       }
     }
-  };
+  }
 
   toggleAlive() {
     this.alive = !this.alive;
@@ -70,12 +81,12 @@ const Proj001ConwaysGameOfLife = ({numAgents = 600, gridSide = 30}) => {
         if (!agent) {
           continue;
         }
-        console.log("first update: ", firstUpdate.current);
-        if (firstUpdate.current) {
-          console.log("agent id: ", agent.id, "agent alive: ", agent.alive, " neighborsAlive: ", agent.neighborsAlive);
-        }
+        // console.log("first update: ", firstUpdate.current);
+        // if (firstUpdate.current) {
+        //   console.log("agent id: ", agent.id, "agent alive: ", agent.alive, " neighborsAlive: ", agent.neighborsAlive);
+        // }
         
-        agent.countNeighborsAlive(agents);
+        agent.countNeighborsAlive(agents, gridSide);
         if (agent.alive && (agent.neighborsAlive < 2 || agent.neighborsAlive > 3)) {
           agent.toggleAlive();
         } else if (!agent.alive && agent.neighborsAlive === 3) {
@@ -88,7 +99,6 @@ const Proj001ConwaysGameOfLife = ({numAgents = 600, gridSide = 30}) => {
       console.log("updated alives: ", alives);
       return newAgents;
     });
-    firstUpdate.current = false;
   };
 
   const generateAgents = () => {
@@ -133,26 +143,29 @@ const Proj001ConwaysGameOfLife = ({numAgents = 600, gridSide = 30}) => {
   };
 
   useEffect(() => {
-    console.log("useEffect called");
-    let animationFrame;
+    let timeoutId;
+    let animationFrameId;
 
-    if (isRunning) {
-      const timeoutId = setTimeout(() => {
-        animationFrame = requestAnimationFrame(() => {
-          // console.log("requestAnimationFrame called");
-          update();
-          getDisplayGrid();
-        });
-      }, 500); 
-    }
-
-    return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
+    const animate = () => {
+        update();
+        getDisplayGrid();
+        
+        // Maya: "Like a heartbeat, schedule the next pulse"
+        timeoutId = setTimeout(() => {
+            animationFrameId = requestAnimationFrame(animate);
+        }, 500);
     };
 
-  }, [isRunning]);
+    if (isRunning) {
+        animate();
+    }
+
+    // Maya: "Clean up both rhythms when they stop"
+    return () => {
+        clearTimeout(timeoutId);
+        cancelAnimationFrame(animationFrameId);
+    };
+}, [isRunning]); // The core rhythm depends only on isRunning
 
 // Add a separate effect for initial setup
   useEffect(() => {
