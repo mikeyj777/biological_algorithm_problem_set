@@ -52,14 +52,13 @@ class Agent {
   };
 }
 
-const Proj001ConwaysGameOfLife = ({numAgents = 600, gridSide = 30}) => {
+const Proj001ConwaysGameOfLife = ({numAgents = 1000, gridSide = 50}) => {
   const [agents, setAgents] = useState([]);
   const [grid, setGrid] = useState(Array(gridSide).fill().map(() => Array(gridSide).fill(false)));
   const [isRunning, setIsRunning] = useState(false);
   const firstUpdate = useRef(true);
 
   const getDisplayGrid = () => {
-    console.log("getDisplayGrid called");
     const newGrid = Array(gridSide).fill().map(() => Array(gridSide).fill(false));
     agents.forEach(agent => {
       if (!agent) {
@@ -73,72 +72,96 @@ const Proj001ConwaysGameOfLife = ({numAgents = 600, gridSide = 30}) => {
   };
 
   const update = () => {
-    console.log("update called");
     setAgents(prevAgents => {
       const newAgents = [...prevAgents];
+      
+      // First pass: count neighbors using current state
+      newAgents.forEach(agent => {
+        if (!agent) return;
+        agent.countNeighborsAlive(newAgents, gridSide);
+      });
+
+      // Second pass: update states based on counted neighbors
       let alives = 0;
-      for (const agent of newAgents) {
-        if (!agent) {
-          continue;
-        }
-        // console.log("first update: ", firstUpdate.current);
-        // if (firstUpdate.current) {
-        //   console.log("agent id: ", agent.id, "agent alive: ", agent.alive, " neighborsAlive: ", agent.neighborsAlive);
-        // }
+      newAgents.forEach(agent => {
+        if (!agent) return;
         
-        agent.countNeighborsAlive(agents, gridSide);
         if (agent.alive && (agent.neighborsAlive < 2 || agent.neighborsAlive > 3)) {
           agent.toggleAlive();
         } else if (!agent.alive && agent.neighborsAlive === 3) {
           agent.toggleAlive();
         }
-        if (agent.alive) {
-          alives++;
-        }
-      }
-      console.log("updated alives: ", alives);
+        if (agent.alive) alives++;
+      });
+
+      console.log("Living cells:", alives);
       return newAgents;
     });
   };
 
   const generateAgents = () => {
-    console.log("generateAgents called");
-    const newAgents = []; 
+    const newAgents = [];
     let agentId = 0;
-    let alives = 0;
-    for (let i = 0; i < numAgents; i++) {
-      let agentHere = true;
-      let x;
-      let y;
-      let angentPlacementAttempt = 0;
-      while (agentHere && angentPlacementAttempt < numAgents && agentId < numAgents) {
-        angentPlacementAttempt++;
-        agentHere = false;
-        x = Math.floor(Math.random() * gridSide);
-        y = Math.floor(Math.random() * gridSide);
-        for (let j = 0; j < i; j++) {
-          if (!newAgents[j]) {
-            continue;
-          }
 
-          if (newAgents[j].x === x && newAgents[j].y === y) {
-            agentHere = true;
-            break;
-          }
-        }
-      }
-      if (!agentHere) {
-        const newAgent = new Agent(x, y);
-        newAgent.id = agentId++;
-        newAgent.alive = Math.random() < 0.9;
-        if (newAgent.alive) {
-          alives++;
-        }
-        // console.log("newAgent id: ", newAgent.id, " x: ", newAgent.x, " y: ", newAgent.y, " alive: ", newAgent.alive);
-        newAgents.push(newAgent);
-      }
-    }
-    console.log("generated alives: ", alives);
+    // Maya: "Let's compose a symphony of patterns!"
+    const patterns = {
+      glider: [[0, 0], [1, 0], [2, 0], [2, 1], [1, 2]],
+      blinker: [[0, 0], [0, 1], [0, 2]],
+      beacon: [[0, 0], [1, 0], [0, 1], [1, 1], [2, 2], [3, 2], [2, 3], [3, 3]],
+      pulsar: [
+        // Top section
+        [2, 4], [2, 5], [2, 6], [2, 10], [2, 11], [2, 12],
+        [4, 2], [5, 2], [6, 2], [10, 2], [11, 2], [12, 2],
+        [4, 7], [5, 7], [6, 7], [10, 7], [11, 7], [12, 7],
+        [7, 4], [7, 5], [7, 6], [7, 10], [7, 11], [7, 12],
+        // Bottom section (mirrored)
+        [9, 4], [9, 5], [9, 6], [9, 10], [9, 11], [9, 12],
+        [4, 9], [5, 9], [6, 9], [10, 9], [11, 9], [12, 9]
+      ],
+      pentadecathlon: [
+        [0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5],
+        [0, 6], [0, 7], [0, 8], [0, 9]
+      ],
+      lwss: [ // Lightweight spaceship
+        [0, 0], [0, 3], [1, 4], [2, 0], 
+        [2, 4], [3, 1], [3, 2], [3, 3], [3, 4]
+      ]
+    };
+
+    // Kai: "Let's create multiple pattern instances at strategic locations"
+    const patternPlacements = [
+      // Quadrant 1
+      { pattern: 'glider', x: 5, y: 5 },
+      { pattern: 'lwss', x: 20, y: 5 },
+      
+      // Quadrant 2
+      { pattern: 'pulsar', x: 15, y: 15 }, // Centered
+      
+      // Quadrant 3
+      { pattern: 'pentadecathlon', x: 35, y: 30 },
+      
+      // Quadrant 4
+      { pattern: 'beacon', x: 40, y: 40 },
+      { pattern: 'glider', x: 25, y: 35 }
+  ];
+
+    patternPlacements.forEach(placement => {
+        const pattern = patterns[placement.pattern];
+        pattern.forEach(([dx, dy]) => {
+            const x = (placement.x + dx) % gridSide;
+            const y = (placement.y + dy) % gridSide;
+            
+            // Check if position is already occupied
+            if (!newAgents.some(agent => agent && agent.x === x && agent.y === y)) {
+                const newAgent = new Agent(x, y);
+                newAgent.id = agentId++;
+                newAgent.alive = true;
+                newAgents.push(newAgent);
+            }
+        });
+    });
+
+    console.log(`Generated ${newAgents.length} living cells in patterns`);
     setAgents(newAgents);
   };
 
@@ -190,32 +213,36 @@ const Proj001ConwaysGameOfLife = ({numAgents = 600, gridSide = 30}) => {
 
   return (
     <div className="game-container">
-      <h1 className="game-title">Conway's Game of Life</h1>
-      <div className="controls">
-        <button onClick={startSimulation} disabled={isRunning}>Start</button>
-        <button onClick={pauseSimulation} disabled={!isRunning}>Pause</button>
-        <button onClick={resetSimulation}>Reset</button>
-      </div>
-      <div 
-        className="game-grid" 
-        style={{
-          gridTemplateColumns: `repeat(${gridSide}, 1fr)`
-        }}
-      >
-        {grid.map((row, x) => 
-          row.map((isAlive, y) => (
-            
-            <div
-              key={`${x}-${y}`}
-              className={`cell ${isAlive ? 'alive' : ''}`}
-              title={`(${x},${y}): ${isAlive}`} // Hover to see info
-              onClick={() => console.log(`Clicked cell (${x},${y}): ${isAlive}`)}
-            />
-          ))
-        )}
-      </div>
+        <h1 className="game-title">Conway's Game of Life</h1>
+        <div className="controls">
+            <button onClick={startSimulation} disabled={isRunning}>Start</button>
+            <button onClick={pauseSimulation} disabled={!isRunning}>Pause</button>
+            <button onClick={resetSimulation}>Reset</button>
+            <span className="grid-info">
+                Grid: {gridSide}×{gridSide} | Active Patterns: {
+                    agents.filter(a => a && a.alive).length
+                }
+            </span>
+        </div>
+        <div 
+          className="game-grid" 
+          style={{
+              gridTemplateColumns: `repeat(${gridSide}, 1fr)`,
+              gridTemplateRows: `repeat(${gridSide}, 1fr)`  // Add this for explicit rows
+          }}
+        >
+            {grid.map((row, x) => 
+                row.map((isAlive, y) => (
+                    <div
+                        key={`${x}-${y}`}
+                        className={`cell ${isAlive ? 'alive' : ''}`}
+                        title={`(${x},${y}): ${isAlive}`}
+                    />
+                ))
+            )}
+        </div>
     </div>
-  );
+);
 };
 
 export default Proj001ConwaysGameOfLife;
