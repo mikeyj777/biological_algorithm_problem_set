@@ -112,6 +112,16 @@ const resourceDict = {
   C: C,
 };
 
+const getResource = (x, y) => {
+  let resourceArray  = Object.keys(resourceDict);
+  let randomNumber = Math.random();
+  let resourceIndex  = Math.floor(randomNumber * resourceArray.length);
+  let randomKey    = resourceArray[resourceIndex];
+  let resourceClass  = resourceDict[randomKey];
+  let resourceInstance = new resourceClass(x, y);
+  return resourceInstance;
+}
+
 class Grid {
   constructor(width, height) {
     this.width = width;
@@ -120,7 +130,7 @@ class Grid {
     for (let i = 0; i < width; i++) {
       this.grid[i] = [];
       for (let j = 0; j < height; j++) {
-        this.grid[i][j] = null;
+        this.grid[i][j] = [];
       }
     }
   }
@@ -139,8 +149,6 @@ class Agent {
     this.money = 0;
   }
 
-  
-
 }
 
 const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMaxMoney = 1000, gridSide = 30, numAgents = 300, maxResourceCount = 300}) => {
@@ -149,26 +157,26 @@ const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMa
   // ratio is interms of A component to other component (current AB and AC are possible compounds)
   // maxBoostPercent is the percentage boost at the optimal point (e.g. 0.25 for 25% boost)
   const grid = new Grid(gridSide, gridSide);
-
-  const getResource = () => {
-    let resourceArray  = Object.keys(resourceDict);
-    let randomNumber = Math.random();
-    let resourceIndex  = Math.floor(randomNumber * resourceArray.length);
-    let randomKey    = resourceArray[resourceIndex];
-    let randomValue  = resourceDict[randomKey];
-    return randomValue;
-  }
   
   const poulateGrid = () => {
     for (let i = 0; i < numAgents; i++) { 
       let agentHere = true;
       while (agentHere) {
+        agentHere = false;
         const x = Math.floor(Math.random() * gridSide);
         const y = Math.floor(Math.random() * gridSide); 
         // only one agent per cell
         if (grid.grid[x][y] instanceof Agent) continue;
+        grid.grid[x][y].forEach((obj) => {
+          if (obj instanceof Agent) {
+            agentHere = true;
+            return;
+          }
+        })
+        if (agentHere) continue;
         const agent = new Agent(x, y);
-        grid.grid[x][y] = agent;  
+        agent.money = 0.1 * agentMaxMoney + Math.random() * 0.9 * agentMaxMoney;
+        grid.grid[x][y].push(agent);  
         agentHere = false;
       }
     }
@@ -178,6 +186,7 @@ const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMa
       const y = Math.floor(Math.random() * gridSide);
       // resources can exist anywhere regardless of current occupancy in cell.
       const resource = getResource(x, y);
+      grid.grid[x][y].push(resource);
     }
 
     return newGrid;
