@@ -12,7 +12,7 @@ Basic optimization concepts
 
 */
 
-import { useState, useEffect, useRef } from "react";
+// import { useState, useEffect, useRef } from "react";
 
 export class Resource {
   constructor(x, y, minValue = 0, maxValue = 100) {
@@ -66,6 +66,7 @@ export class ResourceCollection {
   constructor(type = "A"){
     this.type = type;
     this.collection = [];
+
   }
 
   getValue() {
@@ -84,40 +85,43 @@ export class Mix {
     this.resourceCollection2 = resourceCollection2;
     this.optimalRatio = optimalRatio;
     this.maxBoostPercent = maxBoostPercent;
+    this.value;
     this.getType();
     this.getValue();
   }
 
   getType() {
     if (!this.resourceCollection1 || !this.resourceCollection2) return;
-    this.type = this.collectionResource1.type + this.collectionResouce2.type;
+    this.type = this.resourceCollection1.type + this.resourceCollection2.type;
   }
 
   getValue() {
     // optimal ratio is the most valuable combination of the two resources.  
     // at this point, the value is boosted above the max of either resource value
     // this method uses the total value of the two resource collections 
-    if (!this.resourceCollection1 || !this.collectionResouce2) return;
+    if (!this.resourceCollection1 || !this.resourceCollection2) return;
     let value1 = 0;
-    this.collectionResource1.collection.forEach((resource) => {
+    this.resourceCollection1.collection.forEach((resource) => {
       value1 += resource.value;
     });
     let value2 = 0;
-    this.collectionResouce2.collection.forEach((resource) => {
+    this.resourceCollection2.collection.forEach((resource) => {
       value2 += resource.value;
     });
     let totValue = value1 + value2;
     let ratio = value1 / totValue;
-    let boosted = this.maxBoostPercent * Math.max(value1, value2);
+    let boosted = (1+this.maxBoostPercent) * Math.max(value1, value2);
     const m1 = (boosted - value1) / (this.optimalRatio);
-    const b1 = boosted - m * this.optimalRatio;
+    const b1 = boosted - m1 * this.optimalRatio;
     const m2 = (value2 - boosted) / (1 - this.optimalRatio);
-    const b2 = value2 - m2 * (1 - this.optimalRatio);
-    if (ratio <= this.optimalRatio) {
-      this.value = m1 * ratio + b1;
-    } else {
-      this.value = m2 * ratio + b2;
+    const b2 = value2 - m2 * 1;
+    let m = m1;
+    let b = b1;
+    if (ratio > this.optimalRatio) {
+      m = m2;
+      b = b2;
     }
+    this.value = m * ratio + b;
   }
 }
 
@@ -126,6 +130,8 @@ export const resourceDict = {
   B: B,
   C: C,
 };
+
+export const validCompoundArray = ["AB", "AC", "BA", "CA"];
 
 export const getRandomResourceClass = () => {
 
@@ -160,182 +166,176 @@ export class Grid {
   }
 }
 
-export class Agent {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.resourceCollections = {
-      A: new ResourceCollection("A"),
-      B: new ResourceCollection("B"),
-      C: new ResourceCollection("C"),
-    };
-    this.compounds = [];
-    this.money = 0;
-  }
+// export class Agent {
+//   constructor(x, y) {
+//     this.x = x;
+//     this.y = y;
+//     this.resourceCollections = {
+//       A: new ResourceCollection("A"),
+//       B: new ResourceCollection("B"),
+//       C: new ResourceCollection("C"),
+//     };
+//     this.compounds = [];
+//     this.money = 0;
+//   }
 
-}
+// }
 
-export const generateResourceLevelGradient = (resourceType = null, maxAmountPerCell = 20, newGrid) => {
-  const xMax = newGrid.width - 1;
-  const yMax = newGrid.height - 1;
-  const xOffset = Math.random();
-  const yOffset = Math.random();
-  let x;
-  const xStep = xMax / 100;
-  let y;
-  const yStep = yMax / 100;
-  const resourceClass = getRandomResourceClass();
-  if (resourceType) {
-    resourceClass = resourceDict[resourceType];
-  }
-  // use a circular gradient to determine amount of each resource.
-  // track min resource allocated to adjust the contents of all cells accordingly.
-  let minResourceAmt = maxAmountPerCell * 100;
-  let maxResourceAmt = 0;
-  for (let i = 0; i < xMax; i++) {
-    x = Math.floor(i * xStep);
-    for (let j = 0; j < yMax; j++) {
-      y = Math.floor(j * yStep);
-      let resourceAmt = Math.floor(maxAmountPerCell * (1 - Math.sqrt((x-xOffset)**2 + (y-yOffset)**2)));
-      resourceAmt = Math.max(0, resourceAmt - minResourceAmt);
-      minResourceAmt = Math.min(minResourceAmt, resourceAmt);
-      maxResourceAmt = Math.max(maxResourceAmt, resourceAmt);
+// export const generateResourceLevelGradient = (resourceType = null, maxAmountPerCell = 20, newGrid) => {
+//   const xMax = newGrid.width - 1;
+//   const yMax = newGrid.height - 1;
+//   const xOffset = Math.random();
+//   const yOffset = Math.random();
+//   let x;
+//   const xStep = xMax / 100;
+//   let y;
+//   const yStep = yMax / 100;
+//   const resourceClass = getRandomResourceClass();
+//   if (resourceType) {
+//     resourceClass = resourceDict[resourceType];
+//   }
+//   // use a circular gradient to determine amount of each resource.
+//   // track min resource allocated to adjust the contents of all cells accordingly.
+//   let minResourceAmt = maxAmountPerCell * 100;
+//   let maxResourceAmt = 0;
+//   for (let i = 0; i < xMax; i++) {
+//     x = Math.floor(i * xStep);
+//     for (let j = 0; j < yMax; j++) {
+//       y = Math.floor(j * yStep);
+//       let resourceAmt = Math.floor(maxAmountPerCell * (1 - Math.sqrt((x-xOffset)**2 + (y-yOffset)**2)));
+//       resourceAmt = Math.max(0, resourceAmt - minResourceAmt);
+//       minResourceAmt = Math.min(minResourceAmt, resourceAmt);
+//       maxResourceAmt = Math.max(maxResourceAmt, resourceAmt);
       
-      for (let i = 0; i < resourceAmt; i++) {
-        const resource = resourceClass(x, y);
-        newGrid.grid[i][j].push(resource);
-      }
-    }
-  }
+//       for (let i = 0; i < resourceAmt; i++) {
+//         const resource = resourceClass(x, y);
+//         newGrid.grid[i][j].push(resource);
+//       }
+//     }
+//   }
 
-  for (let i = 0; i < xMax; i++) {
-    for (let j = 0; j < yMax; j++) {
-      const currentResources = newGrid.grid[i][j].length;
-      const adjustedCount = Math.floor(
-        ((currentResources - minResourceAmt) / (maxResourceAmt - minResourceAmt)) * maxAmountPerCell
-      );
+//   for (let i = 0; i < xMax; i++) {
+//     for (let j = 0; j < yMax; j++) {
+//       const currentResources = newGrid.grid[i][j].length;
+//       const adjustedCount = Math.floor(
+//         ((currentResources - minResourceAmt) / (maxResourceAmt - minResourceAmt)) * maxAmountPerCell
+//       );
       
-      // Adjust the actual grid - might need to add or remove resources
-      while (newGrid.grid[i][j].length > adjustedCount) {
-        newGrid.grid[i][j].pop();  // Remove excess resources
-      }
-      while (newGrid.grid[i][j].length < adjustedCount) {
-        const resource = resourceClass(i, j);
-        newGrid.grid[i][j].push(resource);  // Add missing resources
-      }
-    }
-  }
-  return newGrid;
-}
+//       // Adjust the actual grid - might need to add or remove resources
+//       while (newGrid.grid[i][j].length > adjustedCount) {
+//         newGrid.grid[i][j].pop();  // Remove excess resources
+//       }
+//       while (newGrid.grid[i][j].length < adjustedCount) {
+//         const resource = resourceClass(i, j);
+//         newGrid.grid[i][j].push(resource);  // Add missing resources
+//       }
+//     }
+//   }
+//   return newGrid;
+// }
 
-const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMaxMoney = 1000, gridSide = 30, numAgents = 300, maxResourceCount = 300}) => {
+// const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMaxMoney = 1000, gridSide = 30, numAgents = 300, maxResourceCount = 300}) => {
 
-  // optimalRatio is between 0 and 1, representing the resource mix ratio where max boost occurs
-  // ratio is interms of A component to total mix (current AB and AC are possible compounds)
-  // maxBoostPercent is the percentage boost at the optimal point (e.g. 0.25 for 25% boost)
-  const [grid, setGrid] = useEffect(new Grid(gridSide, gridSide));
-  const [isRunning, setIsRunning] = useState(false);
+//   // optimalRatio is between 0 and 1, representing the resource mix ratio where max boost occurs
+//   // ratio is interms of A component to total mix (current AB and AC are possible compounds)
+//   // maxBoostPercent is the percentage boost at the optimal point (e.g. 0.25 for 25% boost)
+//   const [grid, setGrid] = useEffect(new Grid(gridSide, gridSide));
+//   const [isRunning, setIsRunning] = useState(false);
 
-  const populateGrid = () => {
-    for (let i = 0; i < numAgents; i++) { 
-      let agentHere = true;
-      while (agentHere) {
-        agentHere = false;
-        const x = Math.floor(Math.random() * gridSide);
-        const y = Math.floor(Math.random() * gridSide); 
-        // only one agent per cell
-        if (grid.grid[x][y] instanceof Agent) continue;
-        grid.grid[x][y].forEach((obj) => {
-          if (obj instanceof Agent) {
-            agentHere = true;
-            return;
-          }
-        })
-        if (agentHere) continue;
-        const agent = new Agent(x, y);
-        agent.money = 0.1 * agentMaxMoney + Math.random() * 0.9 * agentMaxMoney;
-        grid.grid[x][y].push(agent);  
-        agentHere = false;
-      }
-    }
+//   const populateGrid = () => {
+//     for (let i = 0; i < numAgents; i++) { 
+//       let agentHere = true;
+//       while (agentHere) {
+//         agentHere = false;
+//         const x = Math.floor(Math.random() * gridSide);
+//         const y = Math.floor(Math.random() * gridSide); 
+//         // only one agent per cell
+//         if (grid.grid[x][y] instanceof Agent) continue;
+//         grid.grid[x][y].forEach((obj) => {
+//           if (obj instanceof Agent) {
+//             agentHere = true;
+//             return;
+//           }
+//         })
+//         if (agentHere) continue;
+//         const agent = new Agent(x, y);
+//         agent.money = 0.1 * agentMaxMoney + Math.random() * 0.9 * agentMaxMoney;
+//         grid.grid[x][y].push(agent);  
+//         agentHere = false;
+//       }
+//     }
 
-    for (let i = 0; i < maxResourceCount; i++) {
-      const x = Math.floor(Math.random() * gridSide);
-      const y = Math.floor(Math.random() * gridSide);
-      // resources can exist anywhere regardless of current occupancy in cell.
-      const resource = getResource(x, y);
-      grid.grid[x][y].push(resource);
-    }
+//     for (let i = 0; i < maxResourceCount; i++) {
+//       const x = Math.floor(Math.random() * gridSide);
+//       const y = Math.floor(Math.random() * gridSide);
+//       // resources can exist anywhere regardless of current occupancy in cell.
+//       const resource = getResource(x, y);
+//       grid.grid[x][y].push(resource);
+//     }
 
-    return newGrid;
-  }
+//     return newGrid;
+//   }
 
 
-  useEffect(() => {
-    setGrid(populateGrid());
-  }, [gridSide, numAgents]);
+//   useEffect(() => {
+//     setGrid(populateGrid());
+//   }, [gridSide, numAgents]);
   
-  useEffect(() => {
-    let timeoutId;
-    let animationFrameId;
+//   useEffect(() => {
+//     let timeoutId;
+//     let animationFrameId;
 
-    const animate = () => {
+//     const animate = () => {
         
-      setGrid(populateGrid());
-      const resourceArray  = Object.keys(resourceDict);
-      resourceArray.forEach((resourceType) => {
-        const maxAmountPerCell = 10 + Math.floor(Math.random() * 10);
-        setGrid(generateResourceLevelGradient(resourceType, maxAmountPerCell, grid));
-      })
+//       setGrid(populateGrid());
+//       const resourceArray  = Object.keys(resourceDict);
+//       resourceArray.forEach((resourceType) => {
+//         const maxAmountPerCell = 10 + Math.floor(Math.random() * 10);
+//         setGrid(generateResourceLevelGradient(resourceType, maxAmountPerCell, grid));
+//       })
 
-      timeoutId = setTimeout(() => {
-        animationFrameId = requestAnimationFrame(animate);
-      }, 500);
-    };
+//       timeoutId = setTimeout(() => {
+//         animationFrameId = requestAnimationFrame(animate);
+//       }, 500);
+//     };
 
-    if (isRunning) {
-        animate();
-    }
+//     if (isRunning) {
+//         animate();
+//     }
 
     
-    return () => {
-        clearTimeout(timeoutId);
-        cancelAnimationFrame(animationFrameId);
-    };
-  }, [isRunning]);
+//     return () => {
+//         clearTimeout(timeoutId);
+//         cancelAnimationFrame(animationFrameId);
+//     };
+//   }, [isRunning]);
 
-/*************  ✨ Codeium Command ⭐  *************/
-/**
- * Start the simulation by setting the isRunning state to true
- * @function
- */
-/******  a90363dd-531e-4090-bcd7-60201c44e5a8  *******/
-const startSimulation = () => { 
-  setIsRunning(true);
-}
+// const startSimulation = () => { 
+//   setIsRunning(true);
+// }
 
-const pauseSimulation = () => {
-  setIsRunning(false);
-}
+// const pauseSimulation = () => {
+//   setIsRunning(false);
+// }
 
-const resetSimulation = () => {
-  setIsRunning(false);
-  setGrid(Array(gridSide).fill().map(() => Array(gridSide).fill([])));
-  populateGrid();
-}
+// const resetSimulation = () => {
+//   setIsRunning(false);
+//   setGrid(Array(gridSide).fill().map(() => Array(gridSide).fill([])));
+//   populateGrid();
+// }
 
-  return ( 
+//   return ( 
     
-    <div className="game-container">
-      <h1 className="game-title">2D Landscape</h1>
-      <div className="controls">
-        <button onClick={startSimulation} disabled={isRunning}>Start</button>
-        <button onClick={pauseSimulation} disabled={!isRunning}>Pause</button>
-        <button onClick={resetSimulation}>Reset</button>
-      </div>
-    </div>
+//     <div className="game-container">
+//       <h1 className="game-title">2D Landscape</h1>
+//       <div className="controls">
+//         <button onClick={startSimulation} disabled={isRunning}>Start</button>
+//         <button onClick={pauseSimulation} disabled={!isRunning}>Pause</button>
+//         <button onClick={resetSimulation}>Reset</button>
+//       </div>
+//     </div>
 
-  );
-}
+//   );
+// }
 
-export default Proj002Landscape2D;
+// export default Proj002Landscape2D;
