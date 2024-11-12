@@ -82,7 +82,7 @@ export class Mix {
     this.resourceCollection2 = resourceCollection2;
     this.optimalRatio = optimalRatio;
     this.maxBoostPercent = maxBoostPercent;
-    this.value;
+    this.value = -1;
     this.getType();
     this.getValue();
   }
@@ -175,7 +175,8 @@ export class Agent {
     };
   }
 
-  makeMix(type1, type2) {
+  makeMix(type1, type2, chanceOfMix = null) {
+    if (!chanceOfMix) chanceOfMix = this.chanceOfMix;
     if (Math.random() > this.chanceOfMix) return;
     if (!this.resourceCollections[type1].collection.length) return;
     if (!this.resourceCollections[type2].collection.length) return;
@@ -183,61 +184,64 @@ export class Agent {
     this.compounds.push(mix);
   }
 
-
 }
 
-// export const generateResourceLevelGradient = (resourceType = null, maxAmountPerCell = 20, newGrid) => {
-//   const xMax = newGrid.width - 1;
-//   const yMax = newGrid.height - 1;
-//   const xOffset = Math.random();
-//   const yOffset = Math.random();
-//   let x;
-//   const xStep = xMax / 100;
-//   let y;
-//   const yStep = yMax / 100;
-//   const resourceClass = getRandomResourceClass();
-//   if (resourceType) {
-//     resourceClass = resourceDict[resourceType];
-//   }
-//   // use a circular gradient to determine amount of each resource.
-//   // track min resource allocated to adjust the contents of all cells accordingly.
-//   let minResourceAmt = maxAmountPerCell * 100;
-//   let maxResourceAmt = 0;
-//   for (let i = 0; i < xMax; i++) {
-//     x = Math.floor(i * xStep);
-//     for (let j = 0; j < yMax; j++) {
-//       y = Math.floor(j * yStep);
-//       let resourceAmt = Math.floor(maxAmountPerCell * (1 - Math.sqrt((x-xOffset)**2 + (y-yOffset)**2)));
-//       resourceAmt = Math.max(0, resourceAmt - minResourceAmt);
-//       minResourceAmt = Math.min(minResourceAmt, resourceAmt);
-//       maxResourceAmt = Math.max(maxResourceAmt, resourceAmt);
+export const generateResourceLevelGradient = (resourceType = null, maxAmountPerCell = 20, newGrid) => {
+  const xMax = newGrid.width - 1;
+  const yMax = newGrid.height - 1;
+  
+  const xOffset = 0.5 // Math.random();
+  const yOffset = 0.5 // Math.random();
+  console.log("xOffset: ", xOffset, "yOffset: ", yOffset);
+  let x = -1;
+  let y = -1;
+  const resourceClass = getRandomResourceClass();
+  if (resourceType) {
+    resourceClass = resourceDict[resourceType];
+  }
+  // use a circular gradient to determine amount of each resource.
+  // track min & max resource allocated to adjust the contents of all cells accordingly.
+  let minResourceAmt = maxAmountPerCell * 100;
+  let maxResourceAmt = 0;
+  for (let i = 0; i < xMax; i++) {
+    x = i / xMax;
+    for (let j = 0; j < yMax; j++) {
+      y = j / yMax;
+      let resourceAmt = Math.floor(maxAmountPerCell * (1 - Math.sqrt((x-xOffset)**2 + (y-yOffset)**2)));
+      resourceAmt = Math.max(0, resourceAmt);
+      minResourceAmt = Math.min(minResourceAmt, resourceAmt);
+      maxResourceAmt = Math.max(maxResourceAmt, resourceAmt);
+      console.log("i, ", i, ", j, ", j, "resourceAmt, ", resourceAmt);
       
-//       for (let i = 0; i < resourceAmt; i++) {
-//         const resource = resourceClass(x, y);
-//         newGrid.grid[i][j].push(resource);
-//       }
-//     }
-//   }
-
-//   for (let i = 0; i < xMax; i++) {
-//     for (let j = 0; j < yMax; j++) {
-//       const currentResources = newGrid.grid[i][j].length;
-//       const adjustedCount = Math.floor(
-//         ((currentResources - minResourceAmt) / (maxResourceAmt - minResourceAmt)) * maxAmountPerCell
-//       );
-      
-//       // Adjust the actual grid - might need to add or remove resources
-//       while (newGrid.grid[i][j].length > adjustedCount) {
-//         newGrid.grid[i][j].pop();  // Remove excess resources
-//       }
-//       while (newGrid.grid[i][j].length < adjustedCount) {
-//         const resource = resourceClass(i, j);
-//         newGrid.grid[i][j].push(resource);  // Add missing resources
-//       }
-//     }
-//   }
-//   return newGrid;
-// }
+      for (let m = 0; m < resourceAmt; m++) {
+        const resource = new resourceClass(x, y);
+        newGrid.grid[i][j].push(resource);
+      }
+    }
+  }
+  // console.log("minResourceAmt: ", minResourceAmt, "maxResourceAmt: ", maxResourceAmt);
+  for (let i = 0; i < xMax; i++) {
+    for (let j = 0; j < yMax; j++) {
+      const currentResources = newGrid.grid[i][j].length;
+      if (currentResources === 0) continue;
+      if (maxResourceAmt === minResourceAmt) continue;
+      const adjustedCount = Math.max(0, Math.floor(
+        ((currentResources - minResourceAmt) / (maxResourceAmt - minResourceAmt)) * maxAmountPerCell
+      ));
+      // console.log("currentresources: ", currentResources, "adjustedCount: ", adjustedCount, "minResourceAmt: ", minResourceAmt, "maxResourceAmt: ", maxResourceAmt);
+      if (adjustedCount <= 0) continue;
+      // Adjust the actual grid - might need to add or remove resources
+      while (newGrid.grid[i][j].length > adjustedCount) {
+        newGrid.grid[i][j].pop();  // Remove excess resources
+      }
+      while (newGrid.grid[i][j].length < adjustedCount) {
+        const resource = new resourceClass(i, j);
+        newGrid.grid[i][j].push(resource);  // Add missing resources
+      }
+    }
+  }
+  return newGrid;
+}
 
 // const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMaxMoney = 1000, gridSide = 30, numAgents = 300, maxResourceCount = 300}) => {
 
@@ -246,74 +250,6 @@ export class Agent {
 //   // maxBoostPercent is the percentage boost at the optimal point (e.g. 0.25 for 25% boost)
 //   const [grid, setGrid] = useEffect(new Grid(gridSide, gridSide));
 //   const [isRunning, setIsRunning] = useState(false);
-
-//   const populateGrid = () => {
-//     for (let i = 0; i < numAgents; i++) { 
-//       let agentHere = true;
-//       while (agentHere) {
-//         agentHere = false;
-//         const x = Math.floor(Math.random() * gridSide);
-//         const y = Math.floor(Math.random() * gridSide); 
-//         // only one agent per cell
-//         if (grid.grid[x][y] instanceof Agent) continue;
-//         grid.grid[x][y].forEach((obj) => {
-//           if (obj instanceof Agent) {
-//             agentHere = true;
-//             return;
-//           }
-//         })
-//         if (agentHere) continue;
-//         const agent = new Agent(x, y);
-//         agent.money = 0.1 * agentMaxMoney + Math.random() * 0.9 * agentMaxMoney;
-//         grid.grid[x][y].push(agent);  
-//         agentHere = false;
-//       }
-//     }
-
-//     for (let i = 0; i < maxResourceCount; i++) {
-//       const x = Math.floor(Math.random() * gridSide);
-//       const y = Math.floor(Math.random() * gridSide);
-//       // resources can exist anywhere regardless of current occupancy in cell.
-//       const resource = getResource(x, y);
-//       grid.grid[x][y].push(resource);
-//     }
-
-//     return newGrid;
-//   }
-
-
-//   useEffect(() => {
-//     setGrid(populateGrid());
-//   }, [gridSide, numAgents]);
-  
-//   useEffect(() => {
-//     let timeoutId;
-//     let animationFrameId;
-
-//     const animate = () => {
-        
-//       setGrid(populateGrid());
-//       const resourceArray  = Object.keys(resourceDict);
-//       resourceArray.forEach((resourceType) => {
-//         const maxAmountPerCell = 10 + Math.floor(Math.random() * 10);
-//         setGrid(generateResourceLevelGradient(resourceType, maxAmountPerCell, grid));
-//       })
-
-//       timeoutId = setTimeout(() => {
-//         animationFrameId = requestAnimationFrame(animate);
-//       }, 500);
-//     };
-
-//     if (isRunning) {
-//         animate();
-//     }
-
-    
-//     return () => {
-//         clearTimeout(timeoutId);
-//         cancelAnimationFrame(animationFrameId);
-//     };
-//   }, [isRunning]);
 
 // const startSimulation = () => { 
 //   setIsRunning(true);
@@ -325,8 +261,8 @@ export class Agent {
 
 // const resetSimulation = () => {
 //   setIsRunning(false);
-//   setGrid(Array(gridSide).fill().map(() => Array(gridSide).fill([])));
-//   populateGrid();
+//   // setGrid(Array(gridSide).fill().map(() => Array(gridSide).fill([])));
+//   // populateGrid();
 // }
 
 //   return ( 
