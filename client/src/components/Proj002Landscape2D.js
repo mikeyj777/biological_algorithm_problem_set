@@ -12,7 +12,7 @@ Basic optimization concepts
 
 */
 
-// import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export class Resource {
   constructor(x, y, minValue = 0, maxValue = 100) {
@@ -128,6 +128,8 @@ export const resourceDict = {
   C: C,
 };
 
+const getResourceTypes = () => Object.keys(resourceDict);
+
 export const getRandomResourceClass = () => {
 
   const resourceArray  = Object.keys(resourceDict);
@@ -190,12 +192,12 @@ export const generateResourceLevelGradient = (resourceType = null, maxAmountPerC
   const xMax = newGrid.width - 1;
   const yMax = newGrid.height - 1;
   
-  const xOffset = 0.5 // Math.random();
-  const yOffset = 0.5 // Math.random();
+  const xOffset = Math.random();
+  const yOffset = Math.random();
   console.log("xOffset: ", xOffset, "yOffset: ", yOffset);
   let x = -1;
   let y = -1;
-  const resourceClass = getRandomResourceClass();
+  let resourceClass = getRandomResourceClass();
   if (resourceType) {
     resourceClass = resourceDict[resourceType];
   }
@@ -211,7 +213,7 @@ export const generateResourceLevelGradient = (resourceType = null, maxAmountPerC
       resourceAmt = Math.max(0, resourceAmt);
       minResourceAmt = Math.min(minResourceAmt, resourceAmt);
       maxResourceAmt = Math.max(maxResourceAmt, resourceAmt);
-      console.log("i, ", i, ", j, ", j, "resourceAmt, ", resourceAmt);
+      // console.log("i, ", i, ", j, ", j, "resourceAmt, ", resourceAmt);
       
       for (let m = 0; m < resourceAmt; m++) {
         const resource = new resourceClass(x, y);
@@ -243,40 +245,122 @@ export const generateResourceLevelGradient = (resourceType = null, maxAmountPerC
   return newGrid;
 }
 
-// const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMaxMoney = 1000, gridSide = 30, numAgents = 300, maxResourceCount = 300}) => {
+const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMaxMoney = 1000, gridSide = 30, numAgents = 300, maxResourceCount = 10}) => {
 
-//   // optimalRatio is between 0 and 1, representing the resource mix ratio where max boost occurs
-//   // ratio is interms of A component to total mix (current AB and AC are possible compounds)
-//   // maxBoostPercent is the percentage boost at the optimal point (e.g. 0.25 for 25% boost)
-//   const [grid, setGrid] = useEffect(new Grid(gridSide, gridSide));
-//   const [isRunning, setIsRunning] = useState(false);
+  // optimalRatio is between 0 and 1, representing the resource mix ratio where max boost occurs
+  // ratio is interms of A component to total mix (current AB and AC are possible compounds)
+  // maxBoostPercent is the percentage boost at the optimal point (e.g. 0.25 for 25% boost)
+  const [grid, setGrid] = useState(new Grid(gridSide, gridSide));
+  const [isRunning, setIsRunning] = useState(false);
+  
+  const populateGrid = () => {
+    let newGrid = new Grid(gridSide, gridSide);
+    for (let i = 0; i < numAgents; i++) { 
+      let agentHere = true;
+      while (agentHere) {
+        agentHere = false;
+        const x = Math.floor(Math.random() * gridSide);
+        const y = Math.floor(Math.random() * gridSide); 
+        // only one agent per cell
+        newGrid.grid[x][y].forEach((obj) => {
+          if (obj instanceof Agent) {
+            agentHere = true;
+            return;
+          }
+        })
+        if (agentHere) continue;
+        const agent = new Agent(x, y);
+        agent.money = 0.1 * agentMaxMoney + Math.random() * 0.9 * agentMaxMoney;
+        newGrid.grid[x][y].push(agent);  
+        agentHere = false;
+      }
+    }
 
-// const startSimulation = () => { 
-//   setIsRunning(true);
-// }
+    // console.log("grid with agents: ", newGrid.grid);
+    const resourceTypes = getResourceTypes();
+    resourceTypes.forEach((resourceType) => {
+      setGrid(generateResourceLevelGradient(resourceType, maxResourceCount, newGrid));
+    });
+    // console.log("grid with agents and resources: ", newGrid.grid);
 
-// const pauseSimulation = () => {
-//   setIsRunning(false);
-// }
+    return newGrid;
+  }
 
-// const resetSimulation = () => {
-//   setIsRunning(false);
-//   // setGrid(Array(gridSide).fill().map(() => Array(gridSide).fill([])));
-//   // populateGrid();
-// }
+  useEffect(() => {
+    setGrid(populateGrid());
+  }, []);
+  console.log("populated grid from useState: ", grid.grid);
+  
 
-//   return ( 
+  // useEffect(() => {
+  //   setGrid(Array(gridSide).fill().map(() => Array(gridSide).fill([])));
+  //   setGrid(populateGrid());
+  // }, [gridSide, numAgents]);
+  
+  // useEffect(() => {
+  //   let timeoutId;
+  //   let animationFrameId;
+
+  //   const animate = () => {
+        
+  //     setGrid(populateGrid());
+  //     const resourceArray  = Object.keys(resourceDict);
+  //     resourceArray.forEach((resourceType) => {
+  //       const maxAmountPerCell = 10 + Math.floor(Math.random() * 10);
+  //     })
+
+  //     timeoutId = setTimeout(() => {
+  //       animationFrameId = requestAnimationFrame(animate);
+  //       // Agent
+  //         // walk
+  //         // pick up resources
+  //         // make mix
+  //         // trade mixes
+  //         // drop mixes
+        
+  //       // render grid
+
+
+
+  //     }, 500);
+  //   };
+
+  //   if (isRunning) {
+  //       animate();
+  //   }
+
     
-//     <div className="game-container">
-//       <h1 className="game-title">2D Landscape</h1>
-//       <div className="controls">
-//         <button onClick={startSimulation} disabled={isRunning}>Start</button>
-//         <button onClick={pauseSimulation} disabled={!isRunning}>Pause</button>
-//         <button onClick={resetSimulation}>Reset</button>
-//       </div>
-//     </div>
+  //   return () => {
+  //       clearTimeout(timeoutId);
+  //       cancelAnimationFrame(animationFrameId);
+  //   };
+  // }, [isRunning]);
 
-//   );
-// }
+  const startSimulation = () => { 
+    setIsRunning(true);
+  }
 
-// export default Proj002Landscape2D;
+  const pauseSimulation = () => {
+    setIsRunning(false);
+  }
+
+  const resetSimulation = () => {
+    setIsRunning(false);
+    setGrid(Array(gridSide).fill().map(() => Array(gridSide).fill([])));
+  }
+
+  return ( 
+    
+    <div className="game-container">
+      <h1 className="game-title">2D Landscape</h1>
+      <div className="controls">
+        <button onClick={startSimulation} disabled={isRunning}>Start</button>
+        <button onClick={pauseSimulation} disabled={!isRunning}>Pause</button>
+        <button onClick={resetSimulation}>Reset</button>
+      </div>
+    </div>
+
+  );
+}
+
+export default Proj002Landscape2D;
