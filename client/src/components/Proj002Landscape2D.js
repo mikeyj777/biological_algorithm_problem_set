@@ -38,7 +38,6 @@ export class A extends Resource { //Aethernium
     this.type = "A";
     this.colorRGB = [255, 0, 0];
     this.color = "#FF0000";
-    this.getValue()
   }
 }
 
@@ -48,17 +47,15 @@ export class B extends Resource { //Blazilite
     this.type = "B";
     this.colorRGB = [0, 255, 0];
     this.color = "#00FF00";
-    this.getValue()
   }
 }
 
 export class C extends Resource { //Chronite
   constructor(x, y, maxValue = 100, minValue = 30) {
-    super(x, y, value);
+    super(x, y, maxValue, minValue);
     this.type = "C";
     this.colorRGB = [0, 0, 255];
     this.color = "#0000FF";
-    this.getValue()
   }
 }
 
@@ -131,8 +128,6 @@ export const resourceDict = {
   C: C,
 };
 
-export const validCompoundArray = ["AB", "AC", "BA", "CA"];
-
 export const getRandomResourceClass = () => {
 
   const resourceArray  = Object.keys(resourceDict);
@@ -166,20 +161,30 @@ export class Grid {
   }
 }
 
-// export class Agent {
-//   constructor(x, y) {
-//     this.x = x;
-//     this.y = y;
-//     this.resourceCollections = {
-//       A: new ResourceCollection("A"),
-//       B: new ResourceCollection("B"),
-//       C: new ResourceCollection("C"),
-//     };
-//     this.compounds = [];
-//     this.money = 0;
-//   }
+export class Agent {
+  constructor(x, y, money = 0, chanceOfMix = 0.25) {
+    this.x = x;
+    this.y = y;
+    this.money = money;
+    this.chanceOfMix = chanceOfMix;
+    this.compounds = [];
+    this.resourceCollections = {
+      A: new ResourceCollection("A"),
+      B: new ResourceCollection("B"),
+      C: new ResourceCollection("C"),
+    };
+  }
 
-// }
+  makeMix(type1, type2) {
+    if (Math.random() > this.chanceOfMix) return;
+    if (!this.resourceCollections[type1].collection.length) return;
+    if (!this.resourceCollections[type2].collection.length) return;
+    const mix = new Mix(this.resourceCollections[type1], this.resourceCollections[type2]);
+    this.compounds.push(mix);
+  }
+
+
+}
 
 // export const generateResourceLevelGradient = (resourceType = null, maxAmountPerCell = 20, newGrid) => {
 //   const xMax = newGrid.width - 1;
