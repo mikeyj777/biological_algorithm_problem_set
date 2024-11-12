@@ -30,12 +30,14 @@ class Agent {
     if (grid) this.grid = grid; 
     this.gatherResources();
     // make mix
-    
+
     // trade mixes
     // drop mixes
     //agents take a step (diagonal allowed as long as no agents are present)
     
     // this.move();
+
+    
     
     
   }
@@ -46,14 +48,17 @@ class Agent {
     const y = this.y;
     let resourceCount = 0;
     if (grid.grid[x][y].length === 0) return;
-    if (grid.grid[x][y].length < maxResourcesToCollectPerStep) maxResourcesToCollectPerStep = grid.grid[x][y].length;
-    while (resourceCount < maxResourcesToCollectPerStep) {
+    // one of the grid elements is an agent.  
+    if (grid.grid[x][y].length < maxResourcesToCollectPerStep) maxResourcesToCollectPerStep = grid.grid[x][y].length - 1;
+    while (resourceCount < maxResourcesToCollectPerStep && grid.grid[x][y].length > 1) {
+      if (grid.grid[x][y].length < maxResourcesToCollectPerStep) maxResourcesToCollectPerStep = grid.grid[x][y].length - 1;
       const idxPulled = Math.floor(Math.random() * grid.grid[x][y].length);
       if (grid.grid[x][y][idxPulled] instanceof Resource) {
         const type = grid.grid[x][y][idxPulled].type;
         const res = grid.grid[x][y][idxPulled];
         resourceCount++;
         this.resourceCollections[type].collection.push(res);
+        grid.grid[x][y].splice(idxPulled, 1);
         console.log("agent id: ", this.id, " | type of resource pulled: ", type, " | x: ", res.x, " | y: ", res.y, " | value: ", res.value, "resource Collection: ", this.resourceCollections[type]);
       }
     }

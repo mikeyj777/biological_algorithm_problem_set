@@ -47,6 +47,7 @@ const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMa
           if (!(agent instanceof Agent)) continue;
           agent.grid = grid;
           agent.step();
+          setGrid(agent.grid);
         }
 
         // render grid
