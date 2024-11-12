@@ -47,7 +47,6 @@ export class ResourceCollection {
   constructor(type = "A"){
     this.type = type;
     this.collection = [];
-
   }
 
   getValue() {
@@ -67,13 +66,36 @@ export class Mix {
     this.optimalRatio = optimalRatio;
     this.maxBoostPercent = maxBoostPercent;
     this.value = -1;
+    this.ratio = -1;
     this.getType();
+    this.valid = this.mixIsValid();
+    if (!this.valid) return;
     this.getValue();
+    this.getColor();
   }
 
   getType() {
     if (!this.resourceCollection1 || !this.resourceCollection2) return;
+    type1char = this.resourceCollection1.type.charCodeAt(0);
+    type2char = this.resourceCollection2.type.charCodeAt(0);
+    if (type1char > type2char) {
+      const resColl = this.resourceCollection1;
+      this.resourceCollection1 = this.resourceCollection2;
+      this.resourceCollection2 = resColl;
+    }
     this.type = this.resourceCollection1.type + this.resourceCollection2.type;
+  }
+
+  mixIsValid() {
+    if (!this.resourceCollection1 || !this.resourceCollection2) return false;
+    const requirements = mixResouceQuantityRequirementsAndValueBoosts;
+    if (!(this.type in requirements)) return false;
+    const requirement = requirements[this.type];
+    this.maxBoostPercent = requirement["valueBoost"];
+    const requiredLen1 = requirement[this.resourceCollection1.type];
+    const requiredLen2 = requirement[this.resourceCollection2.type];
+    return (this.resourceCollection1.collection.length >= requiredLen1 && 
+            this.resourceCollection2.collection.length >= requiredLen2);
   }
 
   getValue() {
@@ -89,8 +111,9 @@ export class Mix {
     this.resourceCollection2.collection.forEach((resource) => {
       value2 += resource.value;
     });
-    let totValue = value1 + value2;
-    let ratio = value1 / totValue;
+    const totValue = value1 + value2;
+    const ratio = value1 / totValue;
+    this.ratio = ratio;
     let boosted = (1+this.maxBoostPercent) * Math.max(value1, value2);
     const m1 = (boosted - value1) / (this.optimalRatio);
     const b1 = boosted - m1 * this.optimalRatio;
@@ -104,6 +127,30 @@ export class Mix {
     }
     this.value = m * ratio + b;
   }
+
+  getColor() {
+    const color1rgb = this.resourceCollection1[0].colorRGB;
+    const color2rgb = this.resourceCollection2[0].colorRGB;
+    
+    const r1 = color1rgb[0];
+    const g1 = color1rgb[1];
+    const b1 = color1rgb[2];
+    const r2 = color2rgb[0];
+    const g2 = color2rgb[1];
+    const b2 = color2rgb[2];
+    const r = Math.floor(r1 * (1 - this.ratio) + r2 * this.ratio);
+    const g = Math.floor(g1 * (1 - this.ratio) + g2 * this.ratio);
+    const b = Math.floor(b1 * (1 - this.ratio) + b2 * this.ratio);
+
+    this.colorRGB = [r, g, b];
+    this.color = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+}
+
+export const mixResouceQuantityRequirementsAndValueBoosts = {
+  AB: {"A": 200, "B": 200, valueBoost: 0.25},
+  AC: {"A": 500, "C": 500, valueBoost: 0.5},
+  BC: {"B": 500, "C": 500, valueBoost: 2}, 
 }
 
 export const resourceDict = {

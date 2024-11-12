@@ -16,20 +16,12 @@ class Agent {
     this.grid = null;
   }
 
-  makeMix(type1, type2, chanceOfMix = null) {
-    if (!chanceOfMix) chanceOfMix = this.chanceOfMix;
-    if (Math.random() > this.chanceOfMix) return;
-    if (!this.resourceCollections[type1].collection.length) return;
-    if (!this.resourceCollections[type2].collection.length) return;
-    const mix = new Mix(this.resourceCollections[type1], this.resourceCollections[type2]);
-    this.compounds.push(mix);
-  }
-
   step(grid = null) {
     // pick up resources
     if (grid) this.grid = grid; 
     this.gatherResources();
     // make mix
+
 
     // trade mixes
     // drop mixes
@@ -37,7 +29,7 @@ class Agent {
     
     // this.move();
 
-    
+
     
     
   }
@@ -64,6 +56,15 @@ class Agent {
     }
   }
 
+  makeMix() {
+    const resourceCollctionTypes = Object.keys(this.resourceCollections);
+    const type1 = resourceCollctionTypes[Math.floor(Math.random() * resourceCollctionTypes.length)];
+    let type2 = resourceCollctionTypes[Math.floor(Math.random() * resourceCollctionTypes.length)];
+    while (type1 === type2) {
+      type2 = resourceCollctionTypes[Math.floor(Math.random() * resourceCollctionTypes.length)];
+    };
+    
+  }
   move() {
     const grid = this.grid;
     const previousPosition = {x: this.x, y: this.y};
