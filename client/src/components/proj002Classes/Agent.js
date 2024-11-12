@@ -17,10 +17,10 @@ class Agent {
   }
 
   step(grid = null) {
-    // pick up resources
     if (grid) this.grid = grid; 
     this.gatherResources();
-    // make mix
+    this.makeMix();
+
 
 
     // trade mixes
@@ -60,11 +60,27 @@ class Agent {
     const resourceCollctionTypes = Object.keys(this.resourceCollections);
     const type1 = resourceCollctionTypes[Math.floor(Math.random() * resourceCollctionTypes.length)];
     let type2 = resourceCollctionTypes[Math.floor(Math.random() * resourceCollctionTypes.length)];
-    while (type1 === type2) {
+    const MAX_ATTEMPTS = 25;
+    let attempts = 0;
+    while (type1 === type2 && attempts < MAX_ATTEMPTS) {
+      attempts++;
       type2 = resourceCollctionTypes[Math.floor(Math.random() * resourceCollctionTypes.length)];
     };
-    
+    if (attempts >= MAX_ATTEMPTS) return;
+    const mix = new Mix(this.resourceCollections[type1], this.resourceCollections[type2]);
+    this.compounds.push(mix);
   }
+
+  tradeMixes() {
+    // look for nearby agents
+
+    // get highest value mix
+
+    // add markup to cost
+
+    // trade
+  }
+
   move() {
     const grid = this.grid;
     const previousPosition = {x: this.x, y: this.y};

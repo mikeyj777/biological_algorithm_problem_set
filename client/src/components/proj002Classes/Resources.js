@@ -67,8 +67,11 @@ export class Mix {
     this.maxBoostPercent = maxBoostPercent;
     this.value = -1;
     this.ratio = -1;
+    this.color = "#000000";
+    this.colorRGB = [0, 0, 0];
     this.getType();
     this.valid = this.mixIsValid();
+    console.log("mix valid: ", this.valid);
     if (!this.valid) return;
     this.getValue();
     this.getColor();
@@ -76,14 +79,15 @@ export class Mix {
 
   getType() {
     if (!this.resourceCollection1 || !this.resourceCollection2) return;
-    type1char = this.resourceCollection1.type.charCodeAt(0);
-    type2char = this.resourceCollection2.type.charCodeAt(0);
+    const type1char = this.resourceCollection1.type.charCodeAt(0);
+    const type2char = this.resourceCollection2.type.charCodeAt(0);
     if (type1char > type2char) {
       const resColl = this.resourceCollection1;
       this.resourceCollection1 = this.resourceCollection2;
       this.resourceCollection2 = resColl;
     }
     this.type = this.resourceCollection1.type + this.resourceCollection2.type;
+    console.log("mix type: ", this.type);
   }
 
   mixIsValid() {
@@ -126,11 +130,12 @@ export class Mix {
       b = b2;
     }
     this.value = m * ratio + b;
+    console.log("mix value: ", this.value);
   }
 
   getColor() {
-    const color1rgb = this.resourceCollection1[0].colorRGB;
-    const color2rgb = this.resourceCollection2[0].colorRGB;
+    const color1rgb = this.resourceCollection1.collection[0].colorRGB;
+    const color2rgb = this.resourceCollection2.collection[0].colorRGB;
     
     const r1 = color1rgb[0];
     const g1 = color1rgb[1];
@@ -138,12 +143,14 @@ export class Mix {
     const r2 = color2rgb[0];
     const g2 = color2rgb[1];
     const b2 = color2rgb[2];
-    const r = Math.floor(r1 * (1 - this.ratio) + r2 * this.ratio);
-    const g = Math.floor(g1 * (1 - this.ratio) + g2 * this.ratio);
-    const b = Math.floor(b1 * (1 - this.ratio) + b2 * this.ratio);
+    const r = Math.floor(r1 * (this.ratio) + r2 * (1-this.ratio));
+    const g = Math.floor(g1 * (this.ratio) + g2 * (1-this.ratio));
+    const b = Math.floor(b1 * (this.ratio) + b2 * (1-this.ratio));
 
     this.colorRGB = [r, g, b];
     this.color = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    console.log("mix color: ", this.color);
+    console.log("mix color rgb: ", this.colorRGB);
   }
 }
 
