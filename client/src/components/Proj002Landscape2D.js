@@ -33,10 +33,7 @@ const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMa
     setAgents(gridAndAgents.agents);
   }, [gridSide, numAgents]);
 
-  console.log("after first mount useEffect grid: ", grid);
-  console.log("after first mount useEffect agents: ", agents);
-  
-  useEffect(() => {
+    useEffect(() => {
     let timeoutId;
     let animationFrameId;
 

@@ -21,7 +21,6 @@ export const generateResourceLevelGradient = (resourceType = null, maxAmountPerC
   
   const xOffset = Math.random();
   const yOffset = Math.random();
-  console.log("xOffset: ", xOffset, "yOffset: ", yOffset);
   let x = -1;
   let y = -1;
   let resourceClass = getRandomResourceClass();
@@ -40,7 +39,6 @@ export const generateResourceLevelGradient = (resourceType = null, maxAmountPerC
       resourceAmt = Math.max(0, resourceAmt);
       minResourceAmt = Math.min(minResourceAmt, resourceAmt);
       maxResourceAmt = Math.max(maxResourceAmt, resourceAmt);
-      // console.log("i, ", i, ", j, ", j, "resourceAmt, ", resourceAmt);
       
       for (let m = 0; m < resourceAmt; m++) {
         const resource = new resourceClass(i, j);
@@ -48,7 +46,6 @@ export const generateResourceLevelGradient = (resourceType = null, maxAmountPerC
       }
     }
   }
-  // console.log("minResourceAmt: ", minResourceAmt, "maxResourceAmt: ", maxResourceAmt);
   for (let i = 0; i <= xMax; i++) {
     for (let j = 0; j <= yMax; j++) {
       const currentResources = newGrid.grid[i][j].length;
@@ -57,7 +54,6 @@ export const generateResourceLevelGradient = (resourceType = null, maxAmountPerC
       const adjustedCount = Math.max(0, Math.floor(
         ((currentResources - minResourceAmt) / (maxResourceAmt - minResourceAmt)) * maxAmountPerCell
       ));
-      // console.log("currentresources: ", currentResources, "adjustedCount: ", adjustedCount, "minResourceAmt: ", minResourceAmt, "maxResourceAmt: ", maxResourceAmt);
       if (adjustedCount <= 0) continue;
       // Adjust the actual grid - might need to add or remove resources
       while (newGrid.grid[i][j].length > adjustedCount) {
@@ -101,13 +97,10 @@ export const populateGrid = (agentIdRef, agentMaxMoney, numAgents, gridSide, max
     }
   }
 
-  // console.log("grid with agents: ", newGrid.grid);
   const resourceTypes = getResourceTypes();
   resourceTypes.forEach((resourceType) => {
     newGrid = generateResourceLevelGradient(resourceType, maxResourceCount, newGrid);
   });
-  console.log("grid with agents and resources: ", newGrid.grid);
-  console.log("agents from populate grid: ", newAgents);
   
   return {
     grid: newGrid,

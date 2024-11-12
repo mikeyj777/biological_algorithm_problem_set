@@ -1,4 +1,4 @@
-import { Mix, ResourceCollection } from "./Resources";
+import { Resource, Mix, ResourceCollection , getResourceTypes, resourceDict} from "./Resources";
 
 class Agent {
   constructor(x, y, money = 0, chanceOfMix = 0.25) {
@@ -30,17 +30,33 @@ class Agent {
     if (grid) this.grid = grid; 
     this.gatherResources();
     // make mix
+    
     // trade mixes
     // drop mixes
     //agents take a step (diagonal allowed as long as no agents are present)
     
-    this.move();
+    // this.move();
     
     
   }
 
-  gatherResources() {
-    return;
+  gatherResources(maxResourcesToCollectPerStep = 5) {
+    const grid = this.grid;
+    const x = this.x;
+    const y = this.y;
+    let resourceCount = 0;
+    if (grid.grid[x][y].length === 0) return;
+    if (grid.grid[x][y].length < maxResourcesToCollectPerStep) maxResourcesToCollectPerStep = grid.grid[x][y].length;
+    while (resourceCount < maxResourcesToCollectPerStep) {
+      const idxPulled = Math.floor(Math.random() * grid.grid[x][y].length);
+      if (grid.grid[x][y][idxPulled] instanceof Resource) {
+        const type = grid.grid[x][y][idxPulled].type;
+        const res = grid.grid[x][y][idxPulled];
+        resourceCount++;
+        this.resourceCollections[type].collection.push(res);
+        console.log("agent id: ", this.id, " | type of resource pulled: ", type, " | x: ", res.x, " | y: ", res.y, " | value: ", res.value, "resource Collection: ", this.resourceCollections[type]);
+      }
+    }
   }
 
   move() {
