@@ -75,6 +75,7 @@ export class Mix {
     if (!this.valid) return;
     this.getValue();
     this.getColor();
+    this.sellingCosts = [];
   }
 
   getType() {

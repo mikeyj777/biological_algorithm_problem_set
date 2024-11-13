@@ -1,4 +1,5 @@
 import { Resource, Mix, ResourceCollection , getResourceTypes, resourceDict} from "./Resources";
+import Trading from "./Trading";
 
 class Agent {
   constructor(x, y, money = 0, chanceOfMix = 0.25, compoundSaleMarkup = 0.1) {
@@ -113,6 +114,11 @@ class Agent {
     }
     
     if (!tradeAgent) return;
+
+    const trading = new Trading(this, tradeAgent);
+    console.log("trading likelihoods: ", trading.tradeLikelihoodDistribution);
+    console.log("trading thresholds: ", trading.tradeThresholds);
+    trading.run();
 
   }
 
