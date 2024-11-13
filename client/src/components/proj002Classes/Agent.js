@@ -1,12 +1,13 @@
 import { Resource, Mix, ResourceCollection , getResourceTypes, resourceDict} from "./Resources";
 
 class Agent {
-  constructor(x, y, money = 0, chanceOfMix = 0.25) {
+  constructor(x, y, money = 0, chanceOfMix = 0.25, compoundSaleMarkup = 0.1) {
     this.x = x;
     this.y = y;
     this.id = -1;
     this.money = money;
     this.chanceOfMix = chanceOfMix;
+    this.compoundSaleMarkup = compoundSaleMarkup;
     this.compounds = [];
     this.resourceCollections = {
       A: new ResourceCollection("A"),
@@ -32,6 +33,22 @@ class Agent {
 
     
     
+  }
+
+  getValidMoves(x = null, y = null) {
+    if (!x) x = this.x;
+    if (!y) y = this.y;
+    const moveIncrements = [-1, 0, 1];
+    const xMax = this.grid.width - 1; 
+    const yMax = this.grid.height - 1;
+    let validXmoves = [];
+    let validYmoves = [];
+    moveIncrements.forEach( (increment) => {
+      if (x + increment <= xMax && x - increment >=0 ) validXmoves.push(increment)
+      if (y + increment <= yMax && y - increment >=0 ) validYmoves.push(increment)
+    });
+
+    return {validXmoves, validYmoves};
   }
 
   gatherResources(maxResourcesToCollectPerStep = 5) {
@@ -73,12 +90,30 @@ class Agent {
 
   tradeMixes() {
     // look for nearby agents
+    const grid = this.grid;
+    const valiDirections = this.getValidMoves();
+    const validXdirections = valiDirections.validXmoves;
+    const validYdirections = valiDirections.validYmoves;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 25;
+    let agentFound = false;
+    let tradeAgent = null;
+    while (!agentFound && attempts < MAX_ATTEMPTS) {
+      attempts++;
+      const x = validXdirections[Math.floor(Math.random() * validXdirections.length)];
+      const y = validYdirections[Math.floor(Math.random() * validYdirections.length)];
+      if (x === 0 && y === 0) continue;
+      for (let i = 0; i < grid.grid[x][y].length; i++) {
+        if (grid.grid[x][y][i] instanceof Agent) {
+          agentFound = true;
+          tradeAgent = grid.grid[x][y][i];
+          break;
+        }
+      }
+    }
+    
+    if (!tradeAgent) return;
 
-    // get highest value mix
-
-    // add markup to cost
-
-    // trade
   }
 
   move() {
@@ -86,23 +121,18 @@ class Agent {
     const previousPosition = {x: this.x, y: this.y};
     let attempts = 0;
     const MAX_ATTEMPTS = 25;
-    const xMax = grid.width - 1;
-    const yMax = grid.height - 1;
     let x = this.x;
     let y = this.y;
-    let validXmoves = [];
-    let validYmoves = [];
-    const moveIncrements = [-1, 0, 1];
     let agentHere = true;
     while (agentHere && attempts < MAX_ATTEMPTS) {
       attempts++;
       agentHere = false;
-      moveIncrements.forEach( (increment) => {
-        if (x + increment <= xMax && x - increment >=0 ) validXmoves.push(increment)
-        if (y + increment <= yMax && y - increment >=0 ) validYmoves.push(increment)
-      });
+      const validMoves = this.getValidMoves(x, y);
+      const validXmoves = validMoves.validXmoves;
+      const validYmoves = validMoves.validYmoves;
       const xMove = validXmoves[Math.floor(Math.random() * validXmoves.length)];
       const yMove = validYmoves[Math.floor(Math.random() * validYmoves.length)];
+
       // if agent isn't moving, break out of this loop
       if (xMove === 0 && yMove === 0) break;
       x += xMove;
@@ -115,8 +145,6 @@ class Agent {
       }
       
     }
-    // Check if agent actually moved
-    if (previousPosition.x === x && previousPosition.y === y) return;
     
     // Remove agent from old position
     const oldCell = grid.grid[previousPosition.x][previousPosition.y];
