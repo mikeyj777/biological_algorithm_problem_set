@@ -20,7 +20,8 @@ class Trading {
   }
   
   run(tradePull = null) {
-    this.getHighestValueMixes();
+    const dealOk = this.getHighestValueMixes();
+    if (!dealOk) return;
     this.doTheDeals(tradePull);
   }
 
@@ -45,48 +46,48 @@ class Trading {
     this.highestValueMixes = {};
     
     // search for highest value mix
-    const highestValueMix1 = null;
+    let highestValueMix1 = null;
     for (let i = 0; i < agent1.compounds.length; i++) {
       if (!highestValueMix1) highestValueMix1 = agent1.compounds[i];
       if (agent1.compounds[i].value > highestValueMix1.value) highestValueMix1 = agent1.compounds[i];
     }
-
+    if (!highestValueMix1) return false;
     let highestValueMix2 = null;
     for (let i = 0; i < agent2.compounds.length; i++) {
       if (!highestValueMix2) highestValueMix2 = agent2.compounds[i];
       if (agent2.compounds[i].value > highestValueMix2.value) highestValueMix2 = agent2.compounds[i];
     }
-    console.log("highestValueMixes: ", highestValueMix1, highestValueMix2);
+    if (!highestValueMix2) return false;
 
-    highestValueMix1.sellingCosts.push(highestValueMix1.value * agent1.compoundSaleMarkup);
-    highestValueMix2.sellingCosts.push(highestValueMix2.value * agent2.compoundSaleMarkup);
-    console.log("highestValueMixes with markup: ", highestValueMix1.sellingCosts, highestValueMix2.sellingCosts);
+    highestValueMix1.sellingCosts.push(highestValueMix1.value * (1 + agent1.compoundSaleMarkup));
+    highestValueMix2.sellingCosts.push(highestValueMix2.value * (1 + agent2.compoundSaleMarkup));
 
     this.highestValueMixes[1] = highestValueMix1;
     this.highestValueMixes[2] = highestValueMix2;
+
+    return true;
   }
 
   doTheDeals(tradePull = null) {
     if (!tradePull) {
       tradePull = Math.random();
     }
-
-    console.log("tradePull: ", tradePull);
+    this.tradePull = tradePull;
     this.tradeComplete = false;
     if (tradePull > this.tradeThresholds["trade"]) return;
     
     if (tradePull <= this.tradeThresholds["agent1buys"]) {
-      console.log("agent1buys");
+      // console.log("agent1buys");
       this.buySell(1);
       return;
     }
     if (tradePull <= this.tradeThresholds["agent2buys"]) {
-      console.log("agent2buys");
+      // console.log("agent2buys");
       this.buySell(2);
       return;
     }
     if (tradePull <= this.tradeThresholds["trade"]) {
-      console.log("trade");
+      // console.log("trade");
       this.trade();
     }
   }
@@ -97,9 +98,9 @@ class Trading {
     const buyerAgent = this.agents[buyerAgentNum];
     const sellerAgent = this.agents[sellerAgentNum];
     const compoundToSell = this.highestValueMixes[sellerAgentNum];
-    console.log("compoundToSell: ", compoundToSell);
+    // console.log("compoundToSell: ", compoundToSell);
     const cost = compoundToSell.sellingCosts[compoundToSell.sellingCosts.length - 1];
-    console.log("cost: ", cost);
+    // console.log("cost: ", cost);
     if (buyerAgent.money < cost) {
       return;
     }
@@ -112,6 +113,7 @@ class Trading {
     buyerAgent.money -= cost;
     sellerAgent.money += cost;
     this.tradeComplete = true;
+    this.cost = cost;
   }
 
   trade() {
@@ -128,6 +130,7 @@ class Trading {
     this.agent1.compounds.splice(compountIdx1, 1);
     this.agent2.compounds.splice(compountIdx2, 1);
     this.tradeComplete = true;
+    this.cost = null;
   }
 
 }

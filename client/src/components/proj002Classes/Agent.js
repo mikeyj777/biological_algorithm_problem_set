@@ -1,5 +1,5 @@
-import { Resource, Mix, ResourceCollection , getResourceTypes, resourceDict} from "./Resources";
-import Trading from "./Trading";
+import { Resource, Mix, ResourceCollection , getResourceTypes, resourceDict} from "./Resources.js";
+import Trading from "./Trading.js";
 
 class Agent {
   constructor(x, y, money = 0, chanceOfMix = 0.25, compoundSaleMarkup = 0.1) {
@@ -69,7 +69,7 @@ class Agent {
         resourceCount++;
         this.resourceCollections[type].collection.push(res);
         grid.grid[x][y].splice(idxPulled, 1);
-        console.log("agent id: ", this.id, " | type of resource pulled: ", type, " | x: ", res.x, " | y: ", res.y, " | value: ", res.value, "resource Collection: ", this.resourceCollections[type]);
+        // console.log("agent id: ", this.id, " | type of resource pulled: ", type, " | x: ", res.x, " | y: ", res.y, " | value: ", res.value, "resource Collection: ", this.resourceCollections[type]);
       }
     }
   }
@@ -116,8 +116,6 @@ class Agent {
     if (!tradeAgent) return;
 
     const trading = new Trading(this, tradeAgent);
-    console.log("trading likelihoods: ", trading.tradeLikelihoodDistribution);
-    console.log("trading thresholds: ", trading.tradeThresholds);
     trading.run();
 
   }
