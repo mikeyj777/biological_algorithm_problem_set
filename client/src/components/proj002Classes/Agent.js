@@ -2,13 +2,14 @@ import { Resource, Mix, ResourceCollection , getResourceTypes, resourceDict} fro
 import Trading from "./Trading.js";
 
 class Agent {
-  constructor(x, y, money = 0, chanceOfMix = 0.25, compoundSaleMarkup = 0.1) {
+  constructor(x, y, money = 0, chanceOfMix = 0.25, compoundSaleMarkup = 0.1, maxCompoundInventory = 50) {
     this.x = x;
     this.y = y;
     this.id = -1;
     this.money = money;
     this.chanceOfMix = chanceOfMix;
     this.compoundSaleMarkup = compoundSaleMarkup;
+    this.maxCompoundInventory = maxCompoundInventory;
     this.compounds = [];
     this.resourceCollections = {
       A: new ResourceCollection("A"),
@@ -22,6 +23,9 @@ class Agent {
     if (grid) this.grid = grid; 
     this.gatherResources();
     this.makeMix();
+    this.tradeMixes();
+    // drop mixes once you have over a certain amount
+    this.dropMixes();
 
 
 
@@ -114,10 +118,16 @@ class Agent {
     }
     
     if (!tradeAgent) return;
-
     const trading = new Trading(this, tradeAgent);
     trading.run();
+  }
 
+  dropMixes() {
+    const compoundValuesAndIds = this.compounds.map(mix => [mix.sellingCosts[mix.sellingCosts.length - 1], mix.id]);
+    while (this.compounds.length > this.maxCompoundInventory) {
+      this.compounds.pop();
+    }
+    this.compounds = this.compounds.filter(mix => mix.sellingCosts[mix.sellingCosts.length - 1] < this.money);
   }
 
   move() {

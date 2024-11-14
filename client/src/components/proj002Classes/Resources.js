@@ -71,7 +71,6 @@ export class Mix {
     this.colorRGB = [0, 0, 0];
     this.getType();
     this.valid = this.mixIsValid();
-    console.log("mix valid: ", this.valid);
     if (!this.valid) return;
     this.getValue();
     this.getColor();
@@ -88,7 +87,6 @@ export class Mix {
       this.resourceCollection2 = resColl;
     }
     this.type = this.resourceCollection1.type + this.resourceCollection2.type;
-    console.log("mix type: ", this.type);
   }
 
   mixIsValid() {
@@ -131,7 +129,6 @@ export class Mix {
       b = b2;
     }
     this.value = m * ratio + b;
-    console.log("mix value: ", this.value);
   }
 
   getColor() {
@@ -150,8 +147,6 @@ export class Mix {
 
     this.colorRGB = [r, g, b];
     this.color = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-    console.log("mix color: ", this.color);
-    console.log("mix color rgb: ", this.colorRGB);
   }
 }
 
