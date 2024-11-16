@@ -15,9 +15,10 @@ Basic optimization concepts
 import { useState, useEffect, useRef } from "react";
 import Grid, { populateGrid } from "./proj002Classes/Grid";
 import Agent from "./proj002Classes/Agent";
+import '../styles/Proj002.css';
 
 
-const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMaxMoney = 1000, gridSide = 30, numAgents = 300, maxResourceCount = 10}) => {
+const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMaxMoney = 1000000, gridSide = 30, numAgents = 300, maxResourceCount = 10}) => {
 
   // optimalRatio is between 0 and 1, representing the resource mix ratio where max boost occurs
   // ratio is interms of A component to total mix (current AB and AC are possible compounds)
@@ -27,32 +28,36 @@ const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMa
   const [agents, setAgents] = useState([]);
   const agentId = useRef(0);
 
+  const getCellColor = (cell) => {
+    // use color of top object to shade the cell.
+    for (const obj of cell) {
+      if ('color' in obj) return obj.color;
+    }
+    return '#f0f0f0';
+  }
+
   useEffect(() => {
     const gridAndAgents = populateGrid(agentId, agentMaxMoney, numAgents, gridSide, maxResourceCount);
     setGrid(gridAndAgents.grid);
     setAgents(gridAndAgents.agents);
   }, [gridSide, numAgents]);
 
-    useEffect(() => {
+  useEffect(() => {
     let timeoutId;
     let animationFrameId;
 
     const animate = () => {
         
       timeoutId = setTimeout(() => {
-        animationFrameId = requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
         //agent actions
         
-        for (const agent of agents) {
-          if (!(agent instanceof Agent)) continue;
-          agent.grid = grid;
-          agent.step();
-          setGrid(agent.grid);
-        }
-
-        // render grid
-
-
+      for (const agent of agents) {
+        if (!(agent instanceof Agent)) continue;
+        agent.grid = grid;
+        agent.step();
+        setGrid(agent.grid);
+      }
 
       }, 500);
     };
@@ -60,13 +65,11 @@ const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMa
     if (isRunning) {
         animate();
     }
-
-    
     return () => {
         clearTimeout(timeoutId);
         cancelAnimationFrame(animationFrameId);
     };
-  }, [isRunning]);
+  }, [isRunning, agents, grid]);
 
   const startSimulation = () => { 
     const gridAndAgents = populateGrid(agentId, agentMaxMoney, numAgents, gridSide, maxResourceCount);
@@ -93,8 +96,37 @@ const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMa
         <button onClick={pauseSimulation} disabled={!isRunning}>Pause</button>
         <button onClick={resetSimulation}>Reset</button>
       </div>
-    </div>
 
+      <div className="grid-container">
+        <div 
+          className="grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${gridSide}, 1fr)`,
+            gap: '1px',
+            backgroundColor: '#ddd',
+            padding: '1px',
+            width: 'min(90vw, 600px)',
+            height: 'min(90vw, 600px)',
+            margin: '20px auto'
+          }}
+        >
+          {grid.grid.flat().map((cell, idx) => (
+            <div
+              key={idx}
+              style={{
+                backgroundColor: getCellColor(cell),
+                width: '100%',
+                paddingBottom: '100%', // This creates square cells
+                transition: 'background-color 0.3s',
+                position: 'relative'
+              }}
+              title={`Cell ${idx}: ${JSON.stringify(cell)}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 

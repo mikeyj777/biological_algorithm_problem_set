@@ -15,8 +15,9 @@ class Agent {
       A: new ResourceCollection("A"),
       B: new ResourceCollection("B"),
       C: new ResourceCollection("C"),
-    };
+    }
     this.grid = null;
+    this.color = "#3b82f6";
   }
 
   step(grid = null) {
@@ -26,18 +27,8 @@ class Agent {
     this.tradeMixes();
     // drop mixes once you have over a certain amount
     this.dropMixes();
+    this.move();
 
-
-
-    // trade mixes
-    // drop mixes
-    //agents take a step (diagonal allowed as long as no agents are present)
-    
-    // this.move();
-
-
-    
-    
   }
 
   getValidMoves(x = null, y = null) {
@@ -49,8 +40,8 @@ class Agent {
     let validXmoves = [];
     let validYmoves = [];
     moveIncrements.forEach( (increment) => {
-      if (x + increment <= xMax && x - increment >=0 ) validXmoves.push(increment)
-      if (y + increment <= yMax && y - increment >=0 ) validYmoves.push(increment)
+      if (x + increment <= xMax && x - increment >=0 ) validXmoves.push(x + increment)
+      if (y + increment <= yMax && y - increment >=0 ) validYmoves.push(y + increment)
     });
 
     return {validXmoves, validYmoves};
