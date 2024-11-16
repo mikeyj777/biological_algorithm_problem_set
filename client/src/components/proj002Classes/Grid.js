@@ -1,5 +1,5 @@
-import Agent from "./Agent";
-import { getRandomResourceClass, resourceDict, getResourceTypes } from "./Resources";
+import Agent from "./Agent.js";
+import { getRandomResourceClass, resourceDict, getResourceTypes } from "./Resources.js";
 
 export default class Grid {
   constructor(width, height) {

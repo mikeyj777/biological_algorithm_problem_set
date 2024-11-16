@@ -123,11 +123,76 @@ class Agent {
   }
 
   dropMixes() {
-    const compoundValuesAndIds = this.compounds.map(mix => [mix.sellingCosts[mix.sellingCosts.length - 1], mix.id]);
-    while (this.compounds.length > this.maxCompoundInventory) {
-      this.compounds.pop();
+    
+    if (this.compounds.length <= this.maxCompoundInventory) {
+        return;
     }
-    this.compounds = this.compounds.filter(mix => mix.sellingCosts[mix.sellingCosts.length - 1] < this.money);
+    
+    const updatedCompounds = [...this.compounds].sort((a, b) => b.value - a.value);
+    const compoundsToDrop = updatedCompounds.slice(this.maxCompoundInventory);
+    this.compounds = updatedCompounds.slice(0, this.maxCompoundInventory);
+    
+    let dropIndex = 0;
+    
+    // Relative coordinates for all 8 directions at each radius
+    const getDirections = (radius) => [
+        [radius, 0],    // right
+        [radius, radius],   // bottom-right
+        [0, radius],    // bottom
+        [-radius, radius],  // bottom-left
+        [-radius, 0],   // left
+        [-radius, -radius], // top-left
+        [0, -radius],   // top
+        [radius, -radius]   // top-right
+    ];
+
+    // Try radius 1 drops first
+    const innerDrops = getDirections(1);
+    for (const [dx, dy] of innerDrops) {
+        if (dropIndex >= compoundsToDrop.length) break;
+        
+        const dropX = this.x + dx;
+        const dropY = this.y + dy;
+        
+        if (dropX >= 0 && dropX < this.grid.width && 
+            dropY >= 0 && dropY < this.grid.height) {
+            this.grid.grid[dropX][dropY].push(compoundsToDrop[dropIndex]);
+            dropIndex++;
+            console.log("drop index: ", dropIndex, "x position: ", dropX, "y position: ", dropY, "compound dropped: ", compoundsToDrop[dropIndex]);
+        }
+    }
+    
+    // Then radius 2 drops for remaining compounds
+    if (dropIndex < compoundsToDrop.length) {
+        const outerDrops = getDirections(2);
+        for (const [dx, dy] of outerDrops) {
+            if (dropIndex >= compoundsToDrop.length) break;
+            
+            const dropX = this.x + dx;
+            const dropY = this.y + dy;
+            
+            if (dropX >= 0 && dropX < this.grid.width && 
+                dropY >= 0 && dropY < this.grid.height) {
+                this.grid.grid[dropX][dropY].push(compoundsToDrop[dropIndex]);
+                dropIndex++;
+                console.log("drop index: ", dropIndex, "x position: ", dropX, "y position: ", dropY, "compound dropped: ", compoundsToDrop[dropIndex]);
+            }
+        }
+    }
+    
+    // If we still have compounds to drop, place them at any valid radius 2 location
+    while (dropIndex < compoundsToDrop.length) {
+        const angle = Math.random() * 2 * Math.PI;
+        const dropX = Math.round(this.x + 2 * Math.cos(angle));
+        const dropY = Math.round(this.y + 2 * Math.sin(angle));
+        
+        if (dropX >= 0 && dropX < this.grid.width && 
+            dropY >= 0 && dropY < this.grid.height) {
+            this.grid.grid[dropX][dropY].push(compoundsToDrop[dropIndex]);
+            dropIndex++;
+            console.log("drop index: ", dropIndex, "x position: ", dropX, "y position: ", dropY, "compound dropped: ", compoundsToDrop[dropIndex]);
+        }
+    }
   }
 
   move() {
