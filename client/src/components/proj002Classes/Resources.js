@@ -9,11 +9,39 @@ export class Resource {
     this.minValue = minValue;
     this.maxValue = maxValue;
     this.getValue();
+    this.getColor();
   }
 
   getValue() {
     this.value = this.minValue + Math.random() * (this.maxValue - this.minValue);
   }
+
+  getColor() {
+    const adjustedValue = Math.min(1, Math.max(0, this.value)) * 3; // Convert to 0-3 range
+    const phase = Math.floor(adjustedValue);
+    const remainder = adjustedValue - phase;
+    
+    let r = 0, g = 0, b = 0;
+    
+    switch (phase) {
+      case 0: // Black to Red
+        r = Math.round(remainder * 255);
+        break;
+      case 1: // Red to Yellow
+        r = 255;
+        g = Math.round(remainder * 255);
+        break;
+      case 2: // Yellow to White
+        r = 255;
+        g = 255;
+        b = Math.round(remainder * 255);
+        break;
+    }
+    
+    const toHex = (n) => n.toString(16).padStart(2, '0');
+    this.color = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
 }
 
 export class A extends Resource { //Aethernium
