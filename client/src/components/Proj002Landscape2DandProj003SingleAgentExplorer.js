@@ -10,6 +10,18 @@ Value visualization
 Environment interaction
 Basic optimization concepts
 
+Also includes the details for project 3:
+
+Project 3: Single Agent Explorer
+
+One agent exploring a 2D space
+Learning goals:
+
+Agent movement
+Basic sensing
+Memory tracking
+Simple optimization
+
 */
 
 import { useState, useEffect, useRef } from "react";
