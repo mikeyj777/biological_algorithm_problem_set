@@ -16,27 +16,31 @@ class Agent {
       B: new ResourceCollection("B"),
       C: new ResourceCollection("C"),
     }
-    this.grid = null;
-    this.color = "#3b82f6";
+    this.color = "#FFC0CB";
   }
 
-  step(grid = null) {
-    if (grid) this.grid = grid; 
-    this.gatherResources();
+  step(grid) {
+    grid = this.gatherResources(grid);
+    console.log("grid from gatherResources: ", grid);
     this.makeMix();
-    this.tradeMixes();
+    console.log("grid from makeMix: ", grid);
+    this.tradeMixes(grid);
+    console.log("grid from tradeMixes: ", grid);
     // drop mixes once you have over a certain amount
-    this.dropMixes();
-    this.move();
+    grid = this.dropMixes(grid);
+    console.log("grid from dropMixes: ", grid);
+    grid = this.move(grid);
+    console.log("grid from move: ", grid);
+    return grid;
 
   }
 
-  getValidMoves(x = null, y = null) {
+  getValidMoves(grid, x = null, y = null) {
     if (!x) x = this.x;
     if (!y) y = this.y;
     const moveIncrements = [-1, 0, 1];
-    const xMax = this.grid.width - 1; 
-    const yMax = this.grid.height - 1;
+    const xMax = grid.width - 1; 
+    const yMax = grid.height - 1;
     let validXmoves = [];
     let validYmoves = [];
     moveIncrements.forEach( (increment) => {
@@ -47,12 +51,11 @@ class Agent {
     return {validXmoves, validYmoves};
   }
 
-  gatherResources(maxResourcesToCollectPerStep = 5) {
-    const grid = this.grid;
+  gatherResources(grid, maxResourcesToCollectPerStep = 5) {
     const x = this.x;
     const y = this.y;
     let resourceCount = 0;
-    if (grid.grid[x][y].length === 0) return;
+    if (grid.grid[x][y].length === 0) return grid;
     // one of the grid elements is an agent.  
     if (grid.grid[x][y].length < maxResourcesToCollectPerStep) maxResourcesToCollectPerStep = grid.grid[x][y].length - 1;
     while (resourceCount < maxResourcesToCollectPerStep && grid.grid[x][y].length > 1) {
@@ -67,6 +70,8 @@ class Agent {
         // console.log("agent id: ", this.id, " | type of resource pulled: ", type, " | x: ", res.x, " | y: ", res.y, " | value: ", res.value, "resource Collection: ", this.resourceCollections[type]);
       }
     }
+
+    return grid;
   }
 
   makeMix() {
@@ -81,31 +86,38 @@ class Agent {
     };
     if (attempts >= MAX_ATTEMPTS) return;
     const mix = new Mix(this.resourceCollections[type1], this.resourceCollections[type2]);
+    if (!mix.valid) return;
     this.compounds.push(mix);
   }
 
-  tradeMixes() {
+  tradeMixes(grid) {
     // look for nearby agents
-    const grid = this.grid;
-    const valiDirections = this.getValidMoves();
-    const validXdirections = valiDirections.validXmoves;
-    const validYdirections = valiDirections.validYmoves;
     let attempts = 0;
     const MAX_ATTEMPTS = 25;
     let agentFound = false;
     let tradeAgent = null;
     while (!agentFound && attempts < MAX_ATTEMPTS) {
       attempts++;
-      const x = validXdirections[Math.floor(Math.random() * validXdirections.length)];
-      const y = validYdirections[Math.floor(Math.random() * validYdirections.length)];
-      if (x === 0 && y === 0) continue;
-      for (let i = 0; i < grid.grid[x][y].length; i++) {
-        if (grid.grid[x][y][i] instanceof Agent) {
-          agentFound = true;
-          tradeAgent = grid.grid[x][y][i];
-          break;
+      const xDiff = [-1, 0, 1];
+      const yDiff = [-1, 0, 1];
+      for (let i = 0; i < xDiff.length; i++) {
+        for (let j = 0; j < yDiff.length; j++) {
+          if (xDiff[i] === 0 && yDiff[j] === 0) continue;
+          const xNew = this.x + xDiff[i];
+          const yNew = this.y + yDiff[j];
+          if (xNew < 0 || xNew >= grid.width || yNew < 0 || yNew >= grid.height) continue;
+          for (let k = 0; k < grid.grid[xNew][yNew].length; k++) {
+            if (grid.grid[xNew][yNew][k] instanceof Agent) {
+              agentFound = true;
+              tradeAgent = grid.grid[xNew][yNew][k];
+              break;
+            }
+          }
+          if (agentFound) break;
         }
+        if (agentFound) break;
       }
+      if (agentFound) break;
     }
     
     if (!tradeAgent) return;
@@ -113,10 +125,11 @@ class Agent {
     trading.run();
   }
 
-  dropMixes() {
+  dropMixes(grid) {
     
     if (this.compounds.length <= this.maxCompoundInventory) {
-        return;
+        console.log("no drops needed.  grid in dropMixes: ", grid);
+        return grid;
     }
     
     const updatedCompounds = [...this.compounds].sort((a, b) => b.value - a.value);
@@ -145,9 +158,9 @@ class Agent {
         const dropX = this.x + dx;
         const dropY = this.y + dy;
         
-        if (dropX >= 0 && dropX < this.grid.width && 
-            dropY >= 0 && dropY < this.grid.height) {
-            this.grid.grid[dropX][dropY].push(compoundsToDrop[dropIndex]);
+        if (dropX >= 0 && dropX < grid.width && 
+            dropY >= 0 && dropY < grid.height) {
+            grid.grid[dropX][dropY].push(compoundsToDrop[dropIndex]);
             dropIndex++;
             console.log("drop index: ", dropIndex, "x position: ", dropX, "y position: ", dropY, "compound dropped: ", compoundsToDrop[dropIndex]);
         }
@@ -162,9 +175,9 @@ class Agent {
             const dropX = this.x + dx;
             const dropY = this.y + dy;
             
-            if (dropX >= 0 && dropX < this.grid.width && 
-                dropY >= 0 && dropY < this.grid.height) {
-                this.grid.grid[dropX][dropY].push(compoundsToDrop[dropIndex]);
+            if (dropX >= 0 && dropX < grid.width && 
+                dropY >= 0 && dropY < grid.height) {
+                grid.grid[dropX][dropY].push(compoundsToDrop[dropIndex]);
                 dropIndex++;
                 console.log("drop index: ", dropIndex, "x position: ", dropX, "y position: ", dropY, "compound dropped: ", compoundsToDrop[dropIndex]);
             }
@@ -177,45 +190,41 @@ class Agent {
         const dropX = Math.round(this.x + 2 * Math.cos(angle));
         const dropY = Math.round(this.y + 2 * Math.sin(angle));
         
-        if (dropX >= 0 && dropX < this.grid.width && 
-            dropY >= 0 && dropY < this.grid.height) {
-            this.grid.grid[dropX][dropY].push(compoundsToDrop[dropIndex]);
+        if (dropX >= 0 && dropX < grid.width && 
+            dropY >= 0 && dropY < grid.height) {
+            grid.grid[dropX][dropY].push(compoundsToDrop[dropIndex]);
             dropIndex++;
             console.log("drop index: ", dropIndex, "x position: ", dropX, "y position: ", dropY, "compound dropped: ", compoundsToDrop[dropIndex]);
         }
     }
+
+    return grid;
+
   }
 
-  move() {
-    const grid = this.grid;
+  move(grid) {
     const previousPosition = {x: this.x, y: this.y};
     let attempts = 0;
     const MAX_ATTEMPTS = 25;
     let x = this.x;
     let y = this.y;
     let agentHere = true;
+
     while (agentHere && attempts < MAX_ATTEMPTS) {
       attempts++;
+      const xDiff = [-1, 0, 1];
+      const yDiff = [-1, 0, 1];
+      x = this.x + xDiff[Math.floor(Math.random() * xDiff.length)];
+      y = this.y + yDiff[Math.floor(Math.random() * yDiff.length)];
+      if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) continue;
       agentHere = false;
-      const validMoves = this.getValidMoves(x, y);
-      const validXmoves = validMoves.validXmoves;
-      const validYmoves = validMoves.validYmoves;
-      const xMove = validXmoves[Math.floor(Math.random() * validXmoves.length)];
-      const yMove = validYmoves[Math.floor(Math.random() * validYmoves.length)];
-
-      // if agent isn't moving, break out of this loop
-      if (xMove === 0 && yMove === 0) break;
-      x += xMove;
-      y += yMove;
       for (let i = 0; i < grid.grid[x][y].length; i++) {
         if (grid.grid[x][y][i] instanceof Agent) {
           agentHere = true;
           break;
         }
       }
-      
     }
-    
     // Remove agent from old position
     const oldCell = grid.grid[previousPosition.x][previousPosition.y];
     const agentIndex = oldCell.findIndex(item => item instanceof Agent && item.id === this.id);
@@ -226,6 +235,7 @@ class Agent {
     // Add agent to new position
     grid.grid[x][y].push(this);
 
+    return grid;
   }
 }
 

@@ -30,9 +30,12 @@ const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMa
 
   const getCellColor = (cell) => {
     // use color of top object to shade the cell.
-    for (const obj of cell) {
-      if ('color' in obj) return obj.color;
-    }
+    let idx = cell.length - 1;
+    while (idx >= 0) {
+      if ('color' in cell[idx]) return cell[idx].color;
+      idx--;
+    } 
+    
     return '#f0f0f0';
   }
 
@@ -54,9 +57,8 @@ const Proj002Landscape2D = ({optimalRatio = 0.33, maxBoostPercent = 0.5, agentMa
         
       for (const agent of agents) {
         if (!(agent instanceof Agent)) continue;
-        agent.grid = grid;
-        agent.step();
-        setGrid(agent.grid);
+        const newGrid = agent.step(grid);
+        setGrid(newGrid);
       }
 
       }, 500);

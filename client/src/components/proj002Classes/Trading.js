@@ -41,29 +41,25 @@ class Trading {
 
   getHighestValueMixes() {
 
-    const agent1 = this.agent1;
-    const agent2 = this.agent2;
     this.highestValueMixes = {};
     
-    // search for highest value mix
-    let highestValueMix1 = null;
-    for (let i = 0; i < agent1.compounds.length; i++) {
-      if (!highestValueMix1) highestValueMix1 = agent1.compounds[i];
-      if (agent1.compounds[i].value > highestValueMix1.value) highestValueMix1 = agent1.compounds[i];
-    }
-    if (!highestValueMix1) return false;
-    let highestValueMix2 = null;
-    for (let i = 0; i < agent2.compounds.length; i++) {
-      if (!highestValueMix2) highestValueMix2 = agent2.compounds[i];
-      if (agent2.compounds[i].value > highestValueMix2.value) highestValueMix2 = agent2.compounds[i];
-    }
-    if (!highestValueMix2) return false;
+    let mix1 = null;
+    let mix2 = null;
 
-    highestValueMix1.sellingCosts.push(highestValueMix1.value * (1 + agent1.compoundSaleMarkup));
-    highestValueMix2.sellingCosts.push(highestValueMix2.value * (1 + agent2.compoundSaleMarkup));
+    if (this.agent1.compounds.length == 0 && this.agent2.compounds.length == 0) return false;
 
-    this.highestValueMixes[1] = highestValueMix1;
-    this.highestValueMixes[2] = highestValueMix2;
+    if (this.agent1.compounds.length > 0) {
+        mix1 = this.agent1.compounds.sort((a, b) => b.value - a.value)[0];
+    }
+
+    if (this.agent2.compounds.length > 0) {
+        mix2 = this.agent2.compounds.sort((a, b) => b.value - a.value)[0];
+    }
+    
+    this.highestValueMixes[1] = mix1;
+    this.highestValueMixes[2] = mix2;
+
+    console.log("highestValueMixes: ", this.highestValueMixes);
 
     return true;
   }
@@ -98,7 +94,7 @@ class Trading {
     const buyerAgent = this.agents[buyerAgentNum];
     const sellerAgent = this.agents[sellerAgentNum];
     const compoundToSell = this.highestValueMixes[sellerAgentNum];
-    // console.log("compoundToSell: ", compoundToSell);
+    console.log("compoundToSell: ", compoundToSell);
     const cost = compoundToSell.sellingCosts[compoundToSell.sellingCosts.length - 1];
     // console.log("cost: ", cost);
     if (buyerAgent.money < cost) {
