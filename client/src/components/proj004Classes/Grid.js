@@ -14,9 +14,9 @@ export default class Grid {
   }
 }
 
-export const generateResourceLevelGradient = (maxAmountPerCell = 20, newGrid) => {
-  const xMax = newGrid.width - 1;
-  const yMax = newGrid.height - 1;
+export const generateResourceLevelGradient = (maxAmountPerCell = 20) => {
+  const xMax = this.grid.width - 1;
+  const yMax = this.grid.height - 1;
   
   const xOffset = Math.random();
   const yOffset = Math.random();
